@@ -163,7 +163,7 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
 //		self.mainPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
             self.mainPlayerLayer = AVPlayerLayer(player: self.player)
 //		[self.view.layer insertSublayer:self.mainPlayerLayer below:self.loupeView.layer];
-            self.view.layer.insertSublayer(self.mainPlayerLayer, below: self.loupeView.layer)
+            self.view.layer.insertSublayer(self.mainPlayerLayer!, below: self.loupeView.layer)
 //		self.mainPlayerLayer.frame = self.view.layer.bounds;
             self.mainPlayerLayer!.frame = self.view.layer.bounds
 //
@@ -211,7 +211,7 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
                 zoomSize.height)
 //
 //		[contentLayer addSublayer:self.zoomPlayerLayer];
-            contentLayer.addSublayer(self.zoomPlayerLayer)
+            contentLayer.addSublayer(self.zoomPlayerLayer!)
 //		[self.loupeView.layer addSublayer:contentLayer];
             self.loupeView.layer.addSublayer(contentLayer)
 //
@@ -244,7 +244,7 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
 //    videoPicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
         videoPicker.sourceType = UIImagePickerControllerSourceType.SavedPhotosAlbum
 //    videoPicker.mediaTypes = @[(NSString*)kUTTypeMovie];
-        videoPicker.mediaTypes = [kUTTypeMovie]
+        videoPicker.mediaTypes = [kUTTypeMovie as String]
 //
 //    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
         if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
@@ -266,9 +266,9 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
 //
 //- (NSUInteger)supportedInterfaceOrientations
 //{
-    override func supportedInterfaceOrientations() -> Int {
+    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
 //    return UIInterfaceOrientationMaskLandscape;
-        return Int(UIInterfaceOrientationMask.Landscape.rawValue)
+        return UIInterfaceOrientationMask.Landscape
 //}
     }
 //
@@ -276,7 +276,7 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
 //
 //- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 //{
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String: AnyObject]) {
 //    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
         if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
 //        [self.popover dismissPopoverAnimated:YES];
@@ -300,7 +300,7 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
         self.notificationToken = NSNotificationCenter.defaultCenter().addObserverForName(AVPlayerItemDidPlayToEndTimeNotification, object: item, queue: NSOperationQueue.mainQueue()) {note in
 //		// Simple item playback rewind.
 //		[[self.player currentItem] seekToTime:kCMTimeZero];
-            self.player.currentItem.seekToTime(kCMTimeZero)
+            self.player.currentItem!.seekToTime(kCMTimeZero)
 //	}];
         }
 //
