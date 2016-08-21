@@ -6,347 +6,196 @@
 //
 //
 /*
-     File: APLViewController.h
-     File: APLViewController.m
- Abstract: The player's UIViewController class.
- This controller manages the main view and a sublayer; the mainPlayerLayer. This controller also manages as a subview a UIImageView nammed loupeView. loupeView hosts a layer hirearchy that manages the zoomPlayerLayer.
- Users interact with the position of loupeView in respose to IBActions from a UIPanGestureRecognizer.
-  Version: 1.0
+ Copyright (C) 2016 Apple Inc. All Rights Reserved.
+ See LICENSE.txt for this sample’s licensing information
 
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
- Inc. ("Apple") in consideration of your agreement to the following
- terms, and your use, installation, modification or redistribution of
- this Apple software constitutes acceptance of these terms.  If you do
- not agree with these terms, please do not use, install, modify or
- redistribute this Apple software.
-
- In consideration of your agreement to abide by the following terms, and
- subject to these terms, Apple grants you a personal, non-exclusive
- license, under Apple's copyrights in this original Apple software (the
- "Apple Software"), to use, reproduce, modify and redistribute the Apple
- Software, with or without modifications, in source and/or binary forms;
- provided that if you redistribute the Apple Software in its entirety and
- without modifications, you must retain this notice and the following
- text and disclaimers in all such redistributions of the Apple Software.
- Neither the name, trademarks, service marks or logos of Apple Inc. may
- be used to endorse or promote products derived from the Apple Software
- without specific prior written permission from Apple.  Except as
- expressly stated in this notice, no other rights or licenses, express or
- implied, are granted by Apple herein, including but not limited to any
- patent rights that may be infringed by your derivative works or by other
- works in which the Apple Software may be incorporated.
-
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
-
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
-
- Copyright (C) 2012 Apple Inc. All Rights Reserved.
-
+ Abstract:
+ The player's UIViewController class.
+  This controller manages the main view and a sublayer; the mainPlayerLayer. This controller also manages as a subview a UIImageView nammed loupeView. loupeView hosts a layer hirearchy that manages the zoomPlayerLayer.
+  Users interact with the position of loupeView in respose to IBActions from a UIPanGestureRecognizer.
  */
-//
-//
-//#import <UIKit/UIKit.h>
+
+
 import UIKit
-//#import <AVFoundation/AVFoundation.h>
 import AVFoundation
-//
-//@interface APLViewController : UIViewController <UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverControllerDelegate>
-//
-//@end
-//
-//
-//#import "APLViewController.h"
-//#import <MobileCoreServices/MobileCoreServices.h>
+
+
 import MobileCoreServices
-//#import <CoreMedia/CoreMedia.h>
 import CoreMedia
-//
-//#define ZOOM_FACTOR 4.0
+
 private let ZOOM_FACTOR: CGFloat = 4.0
-//#define LOUPE_BEZEL_WIDTH 18.0
 private let LOUPE_BEZEL_WIDTH: CGFloat = 18.0
-//
-//
+
+
 @objc(APLViewController)
-class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverControllerDelegate {
-//@interface APLViewController ()
-//
-//{
-//	BOOL _haveSetupPlayerLayers;
-    var _haveSetupPlayerLayers: Bool = false
-//}
-//
-//@property AVPlayer *player;
+class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverControllerDelegate, UIPopoverPresentationControllerDelegate {
+    
+    private var _haveSetupPlayerLayers: Bool = false
+    
     var player: AVPlayer!
-//@property AVPlayerLayer *zoomPlayerLayer;
     var zoomPlayerLayer: AVPlayerLayer?
-//@property AVPlayerLayer *mainPlayerLayer;
     var mainPlayerLayer: AVPlayerLayer?
-//@property UIPopoverController *popover;
-    var popover: UIPopoverController?
-//@property id notificationToken;
     var notificationToken: AnyObject?
-//
-//@property (weak) IBOutlet UINavigationBar *navigationBar;
+    
     @IBOutlet weak var navigationBar: UINavigationBar!
-//@property (weak) IBOutlet UIImageView *loupeView;
     @IBOutlet weak var loupeView: UIImageView!
-//
-//@end
-//
-//@implementation APLViewController
-//
-//- (void)viewDidLoad
-//{
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-//	_player = [[AVPlayer alloc] init];
+        
         player = AVPlayer()
-//	_player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
-        player.actionAtItemEnd = AVPlayerActionAtItemEnd.None
-//	_haveSetupPlayerLayers = NO;
+        player.actionAtItemEnd = .none
         _haveSetupPlayerLayers = false
-//}
     }
-//
-//- (IBAction)handleTapFrom:(UITapGestureRecognizer *)recognizer
-//{
-    @IBAction func handleTapFrom(recognizer: UITapGestureRecognizer) {
-//	self.navigationBar.hidden = !self.navigationBar.hidden;
-        self.navigationBar.hidden = !self.navigationBar.hidden
-//}
+    
+    @IBAction func handleTapFrom(_ recognizer: UITapGestureRecognizer) {
+        self.navigationBar.isHidden = !self.navigationBar.isHidden
     }
-//
-//- (IBAction)handlePanFrom:(UIPanGestureRecognizer *)recognizer
-//{
-    @IBAction func handlePanFrom(recognizer: UIPanGestureRecognizer) {
-//	CGPoint translation = [recognizer translationInView:self.view];
-        let translation = recognizer.translationInView(self.view)
-//
-//	recognizer.view.center = CGPointMake(recognizer.view.center.x + translation.x,
-        recognizer.view!.center = CGPointMake(recognizer.view!.center.x + translation.x,
-//	                                     recognizer.view.center.y + translation.y);
-            recognizer.view!.center.y + translation.y)
-//	[recognizer setTranslation:CGPointMake(0, 0) inView:self.view];
-        recognizer.setTranslation(CGPoint(), inView: self.view)
-//
-//	[CATransaction begin];
+    
+    @IBAction func handlePanFrom(_ recognizer: UIPanGestureRecognizer) {
+        let translation = recognizer.translation(in: self.view)
+        
+        recognizer.view!.center = CGPoint(x: recognizer.view!.center.x + translation.x,
+                                          y: recognizer.view!.center.y + translation.y)
+        recognizer.setTranslation(CGPoint(), in: self.view)
+        
         CATransaction.begin()
-//	[CATransaction setDisableActions:YES];
         CATransaction.setDisableActions(true)
-//	self.zoomPlayerLayer.position = CGPointMake(self.zoomPlayerLayer.position.x - translation.x * ZOOM_FACTOR,
-        self.zoomPlayerLayer?.position = CGPointMake(self.zoomPlayerLayer!.position.x - translation.x * ZOOM_FACTOR,
-//	                                        self.zoomPlayerLayer.position.y - translation.y * ZOOM_FACTOR);
-            self.zoomPlayerLayer!.position.y - translation.y * ZOOM_FACTOR)
-//	[CATransaction commit];
+        self.zoomPlayerLayer?.position = CGPoint(x: self.zoomPlayerLayer!.position.x - translation.x * ZOOM_FACTOR,
+                                                 y: self.zoomPlayerLayer!.position.y - translation.y * ZOOM_FACTOR)
         CATransaction.commit()
-//}
     }
-//
-//- (void)viewDidLayoutSubviews
-//{
+    
     override func viewDidLayoutSubviews() {
-//	if (!_haveSetupPlayerLayers) {
         if !_haveSetupPlayerLayers {
-//		// Main PlayerLayer.
-//		self.mainPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
+            // Main PlayerLayer.
             self.mainPlayerLayer = AVPlayerLayer(player: self.player)
-//		[self.view.layer insertSublayer:self.mainPlayerLayer below:self.loupeView.layer];
             self.view.layer.insertSublayer(self.mainPlayerLayer!, below: self.loupeView.layer)
-//		self.mainPlayerLayer.frame = self.view.layer.bounds;
             self.mainPlayerLayer!.frame = self.view.layer.bounds
-//
-//		// Build the loupe.
-//		// Content layer serves two functions:
-//		//  - An opaque black backdrop, since our AVPlayerLayers have a finite edge.
-//		//  - Applies a sub-layers only mask on behalf of the loupe view
-//		CALayer *contentLayer = [CALayer layer];
+            
+            // Build the loupe.
+            // Content layer serves two functions:
+            //  - An opaque black backdrop, since our AVPlayerLayers have a finite edge.
+            //  - Applies a sub-layers only mask on behalf of the loupe view
             let contentLayer = CALayer()
-//		contentLayer.frame = self.loupeView.bounds;
             contentLayer.frame = self.loupeView.bounds
-//		contentLayer.backgroundColor = [[UIColor blackColor] CGColor];
-            contentLayer.backgroundColor = UIColor.blackColor().CGColor
-//
-//		// The content layer has a circular mask applied.
-//		CAShapeLayer *maskLayer = [CAShapeLayer layer];
+            contentLayer.backgroundColor = UIColor.black.cgColor
+            
+            // The content layer has a circular mask applied.
             let maskLayer = CAShapeLayer()
-//		maskLayer.frame = contentLayer.bounds;
             maskLayer.frame = contentLayer.bounds
-//
-//		CGMutablePathRef circlePath = CGPathCreateMutable();
-            let circlePath = CGPathCreateMutable()
-//		CGPathAddEllipseInRect(circlePath, NULL, CGRectInset(self.loupeView.layer.bounds, LOUPE_BEZEL_WIDTH , LOUPE_BEZEL_WIDTH));
-            CGPathAddEllipseInRect(circlePath, nil, CGRectInset(self.loupeView.layer.bounds, LOUPE_BEZEL_WIDTH , LOUPE_BEZEL_WIDTH))
-//
-//		maskLayer.path = circlePath;
+            
+            let circlePath = CGMutablePath()
+            circlePath.addEllipse(in: self.loupeView.layer.bounds.insetBy(dx: LOUPE_BEZEL_WIDTH , dy: LOUPE_BEZEL_WIDTH))
+            
             maskLayer.path = circlePath
-//		CGPathRelease(circlePath);
-//
-//		contentLayer.mask = maskLayer;
+            
             contentLayer.mask = maskLayer
-//
-//		// Set up the zoom AVPlayerLayer.
-//		self.zoomPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
+            
+            // Set up the zoom AVPlayerLayer.
             self.zoomPlayerLayer = AVPlayerLayer(player: self.player)
-//		CGSize zoomSize = CGSizeMake(self.view.layer.bounds.size.width * ZOOM_FACTOR, self.view.layer.bounds.size.height * ZOOM_FACTOR);
-            let zoomSize = CGSizeMake(self.view.layer.bounds.size.width * ZOOM_FACTOR, self.view.layer.bounds.size.height * ZOOM_FACTOR)
-//		self.zoomPlayerLayer.frame = CGRectMake((contentLayer.bounds.size.width /2) - (zoomSize.width /2),
-                self.zoomPlayerLayer!.frame = CGRectMake((contentLayer.bounds.size.width/2) - (zoomSize.width/2),
-//											(contentLayer.bounds.size.height /2) - (zoomSize.height /2),
-                (contentLayer.bounds.size.height/2) - (zoomSize.height/2),
-//											zoomSize.width,
-                zoomSize.width,
-//											zoomSize.height);
-                zoomSize.height)
-//
-//		[contentLayer addSublayer:self.zoomPlayerLayer];
+            let zoomSize = CGSize(width: self.view.layer.bounds.size.width * ZOOM_FACTOR, height: self.view.layer.bounds.size.height * ZOOM_FACTOR)
+            self.zoomPlayerLayer!.frame = CGRect(x: (contentLayer.bounds.size.width/2) - (zoomSize.width/2),
+                                                 y: (contentLayer.bounds.size.height/2) - (zoomSize.height/2),
+                                                 width: zoomSize.width,
+                                                 height: zoomSize.height)
+            
             contentLayer.addSublayer(self.zoomPlayerLayer!)
-//		[self.loupeView.layer addSublayer:contentLayer];
             self.loupeView.layer.addSublayer(contentLayer)
-//
-//		_haveSetupPlayerLayers = YES;
+            
             _haveSetupPlayerLayers = true
-//	}
         }
-//}
     }
-//
-//- (IBAction)loadMovieFromCameraRoll:(id)sender
-//{
-    @IBAction func loadMovieFromCameraRoll(sender: UIBarButtonItem) {
-//    [self.player pause];
+    
+    @IBAction func loadMovieFromCameraRoll(_ sender: UIBarButtonItem) {
         self.player.pause()
-//
-//    if ([self.popover isPopoverVisible]) {
-        if self.popover?.popoverVisible ?? false {
-//        [self.popover dismissPopoverAnimated:YES];
-            self.popover!.dismissPopoverAnimated(true)
-//    }
-        }
-//    // Initialize UIImagePickerController to select a movie from the camera roll.
-//    UIImagePickerController *videoPicker = [[UIImagePickerController alloc] init];
+        
+        /*
+         Show the image picker controller as a popover (iPad) or as a modal view controller
+         (iPhone and iPhone 6 plus).
+         */
         let videoPicker = UIImagePickerController()
-//    videoPicker.delegate = self;
+        videoPicker.edgesForExtendedLayout = []
+        videoPicker.modalPresentationStyle = .popover
         videoPicker.delegate = self
-//    videoPicker.modalPresentationStyle = UIModalPresentationCurrentContext;
-        videoPicker.modalPresentationStyle = UIModalPresentationStyle.CurrentContext
-//    videoPicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
-        videoPicker.sourceType = UIImagePickerControllerSourceType.SavedPhotosAlbum
-//    videoPicker.mediaTypes = @[(NSString*)kUTTypeMovie];
+        // Initialize UIImagePickerController to select a movie from the camera roll.
+        videoPicker.sourceType = UIImagePickerControllerSourceType.savedPhotosAlbum
         videoPicker.mediaTypes = [kUTTypeMovie as String]
-//
-//    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
-//        self.popover = [[UIPopoverController alloc] initWithContentViewController:videoPicker];
-            self.popover = UIPopoverController(contentViewController: videoPicker)
-//        self.popover.delegate = self;
-            self.popover!.delegate = self
-//        [self.popover presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionDown animated:YES];
-            self.popover!.presentPopoverFromBarButtonItem(sender, permittedArrowDirections: .Down, animated: true)
-//    }
-//	else {
-        } else {
-//        [self presentViewController:videoPicker animated:YES completion:nil];
-            self.presentViewController(videoPicker, animated: true, completion: nil)
-//    }
+        
+        let popoverPresController = videoPicker.popoverPresentationController
+        popoverPresController?.barButtonItem = sender
+        popoverPresController?.permittedArrowDirections = UIPopoverArrowDirection.any
+        popoverPresController?.delegate = self
+        
+        self.present(videoPicker, animated: true) {
+            // Done.
         }
-//}
     }
-//
-//- (NSUInteger)supportedInterfaceOrientations
-//{
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-//    return UIInterfaceOrientationMaskLandscape;
-        return UIInterfaceOrientationMask.Landscape
-//}
-    }
-//
-//#pragma mark Image Picker Controller Delegate
-//
-//- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
-//{
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String: AnyObject]) {
-//    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
-//        [self.popover dismissPopoverAnimated:YES];
-            self.popover?.dismissPopoverAnimated(true)
-//    }
-//	else {
-        } else {
-//        [self dismissViewControllerAnimated:YES completion:nil];
-            self.dismissViewControllerAnimated(true, completion: nil)
-//    }
+    
+    //MARK: Image Picker Controller Delegate
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        self.dismiss(animated: true, completion: nil)
+        
+        let url = info[UIImagePickerControllerReferenceURL] as! URL
+        let item = AVPlayerItem(url: url)
+        self.player.replaceCurrentItem(with: item)
+        
+        self.notificationToken = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: OperationQueue.main) {note in
+            // Simple item playback rewind.
+            self.player.currentItem!.seek(to: kCMTimeZero)
         }
-//
-//    NSURL *url = info[UIImagePickerControllerReferenceURL];
-        let url = info[UIImagePickerControllerReferenceURL] as! NSURL
-//    AVPlayerItem *item = [AVPlayerItem playerItemWithURL:url];
-        let item = AVPlayerItem(URL: url)
-//	[self.player replaceCurrentItemWithPlayerItem:item];
-        self.player.replaceCurrentItemWithPlayerItem(item)
-//
-//	self.notificationToken = [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:item queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-        self.notificationToken = NSNotificationCenter.defaultCenter().addObserverForName(AVPlayerItemDidPlayToEndTimeNotification, object: item, queue: NSOperationQueue.mainQueue()) {note in
-//		// Simple item playback rewind.
-//		[[self.player currentItem] seekToTime:kCMTimeZero];
-            self.player.currentItem!.seekToTime(kCMTimeZero)
-//	}];
-        }
-//
-//	[self.player play];
+        
         self.player.play()
-//}
     }
-//
-//- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
-//{
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-//    [self dismissViewControllerAnimated:YES completion:nil];
-        self.dismissViewControllerAnimated(true, completion: nil)
-//
-//	// Make sure playback is resumed from any interruption.
-//    [self.player play];
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        self.dismiss(animated: true, completion: nil)
+        
+        // Make sure playback is resumed from any interruption.
         self.player.play()
-//}
     }
-//
-//# pragma mark Popover Controller Delegate
-//
-//- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-//{
-    func popoverControllerDidDismissPopover(popoverController: UIPopoverController) {
-//    // Make sure playback is resumed from any interruption.
-//    [self.player play];
+    
+    //MARK: Popover Presentation Controller Delegate
+    
+    func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
+        
+        // Called when a Popover is dismissed.
+        
+        // Make sure playback is resumed from any interruption.
         self.player.play()
-//}
     }
-//
-//@end
+    
+    func popoverPresentationControllerShouldDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) -> Bool {
+        // Return YES if the Popover should be dismissed.
+        // Return NO if the Popover should not be dismissed.
+        return true
+    }
+
+    func popoverPresentationController(_ popoverPresentationController: UIPopoverPresentationController, willRepositionPopoverTo rect: UnsafeMutablePointer<CGRect>, in view: AutoreleasingUnsafeMutablePointer<UIView>)
+    {
+        // Called when the Popover changes positon.
+    }
+    
+    //MARK: - Adaptive Presentation Controller Delegate
+    
+    // Called for the iPhone only.
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle
+    {
+        return UIModalPresentationStyle.fullScreen
+    
+        // Note: by returning this, you can force it to be a popover for iPhone!
+        // return UIModalPresentationNone;
+    }
+    
 }
-//
-//
-//
-//@implementation UIImagePickerController (LandscapeOrientation)
+
+
+
 extension UIImagePickerController {
-//
-//- (BOOL)shouldAutorotate
-//{
-    override public func shouldAutorotate() -> Bool {
-//    return NO;
+    
+    override open var shouldAutorotate: Bool {
         return false
-//}
     }
-//
-//@end
+    
 }

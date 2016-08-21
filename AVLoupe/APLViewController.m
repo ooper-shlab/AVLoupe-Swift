@@ -1,62 +1,23 @@
 /*
-     File: APLViewController.m
- Abstract: The player's view controller class. 
- This controller manages the main view and a sublayer; the mainPlayerLayer. This controller also manages as a subview a UIImageView nammed loupeView. loupeView hosts a layer hirearchy that manages the zoomPlayerLayer.
- Users interact with the position of loupeView in respose to IBActions from a UIPanGestureRecognizer.
-  Version: 1.0
+ Copyright (C) 2016 Apple Inc. All Rights Reserved.
+ See LICENSE.txt for this sample’s licensing information
  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
- Inc. ("Apple") in consideration of your agreement to the following
- terms, and your use, installation, modification or redistribution of
- this Apple software constitutes acceptance of these terms.  If you do
- not agree with these terms, please do not use, install, modify or
- redistribute this Apple software.
- 
- In consideration of your agreement to abide by the following terms, and
- subject to these terms, Apple grants you a personal, non-exclusive
- license, under Apple's copyrights in this original Apple software (the
- "Apple Software"), to use, reproduce, modify and redistribute the Apple
- Software, with or without modifications, in source and/or binary forms;
- provided that if you redistribute the Apple Software in its entirety and
- without modifications, you must retain this notice and the following
- text and disclaimers in all such redistributions of the Apple Software.
- Neither the name, trademarks, service marks or logos of Apple Inc. may
- be used to endorse or promote products derived from the Apple Software
- without specific prior written permission from Apple.  Except as
- expressly stated in this notice, no other rights or licenses, express or
- implied, are granted by Apple herein, including but not limited to any
- patent rights that may be infringed by your derivative works or by other
- works in which the Apple Software may be incorporated.
- 
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
- 
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
- 
- Copyright (C) 2012 Apple Inc. All Rights Reserved.
- 
+ Abstract:
+ The player's view controller class. 
+  This controller manages the main view and a sublayer; the mainPlayerLayer. This controller also manages as a subview a UIImageView nammed loupeView. loupeView hosts a layer hirearchy that manages the zoomPlayerLayer.
+  Users interact with the position of loupeView in respose to IBActions from a UIPanGestureRecognizer.
  */
 
-
 #import "APLViewController.h"
-#import <MobileCoreServices/MobileCoreServices.h>
-#import <CoreMedia/CoreMedia.h>
+
+@import MobileCoreServices;
+@import CoreMedia;
 
 #define ZOOM_FACTOR 4.0
 #define LOUPE_BEZEL_WIDTH 18.0
 
 
-@interface APLViewController ()
+@interface APLViewController () <UIPopoverPresentationControllerDelegate, UIAdaptivePresentationControllerDelegate>
 
 {
 	BOOL _haveSetupPlayerLayers;
@@ -65,7 +26,6 @@
 @property AVPlayer *player;
 @property AVPlayerLayer *zoomPlayerLayer;
 @property AVPlayerLayer *mainPlayerLayer;
-@property UIPopoverController *popover;
 @property id notificationToken;
 
 @property (weak) IBOutlet UINavigationBar *navigationBar;
@@ -77,6 +37,8 @@
 
 - (void)viewDidLoad
 {
+    [super viewDidLoad];
+
 	_player = [[AVPlayer alloc] init];
 	_player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
 	_haveSetupPlayerLayers = NO;
@@ -149,47 +111,40 @@
 {
     [self.player pause];
     
-    if ([self.popover isPopoverVisible]) {
-        [self.popover dismissPopoverAnimated:YES];
-    }
-    // Initialize UIImagePickerController to select a movie from the camera roll.
+    /* 
+     Show the image picker controller as a popover (iPad) or as a modal view controller
+    (iPhone and iPhone 6 plus).
+     */
     UIImagePickerController *videoPicker = [[UIImagePickerController alloc] init];
+    videoPicker.edgesForExtendedLayout = UIRectEdgeNone;
+    videoPicker.modalPresentationStyle = UIModalPresentationPopover;
     videoPicker.delegate = self;
-    videoPicker.modalPresentationStyle = UIModalPresentationCurrentContext;
+    // Initialize UIImagePickerController to select a movie from the camera roll.
     videoPicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
     videoPicker.mediaTypes = @[(NSString*)kUTTypeMovie];
     
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        self.popover = [[UIPopoverController alloc] initWithContentViewController:videoPicker];
-        self.popover.delegate = self;
-        [self.popover presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionDown animated:YES];
-    }
-	else {
-        [self presentViewController:videoPicker animated:YES completion:nil];
-    }
-}
+    UIPopoverPresentationController *popoverPresController = videoPicker.popoverPresentationController;
+    popoverPresController.barButtonItem = sender;
+    popoverPresController.permittedArrowDirections = UIPopoverArrowDirectionAny;
+    popoverPresController.delegate = self;
 
-- (NSUInteger)supportedInterfaceOrientations
-{
-    return UIInterfaceOrientationMaskLandscape;
+    [self presentViewController:videoPicker animated:YES completion:^{
+        // Done.
+    }];
 }
 
 #pragma mark Image Picker Controller Delegate 
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        [self.popover dismissPopoverAnimated:YES];
-    }
-	else {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
+    [self dismissViewControllerAnimated:YES completion:nil];
     
     NSURL *url = info[UIImagePickerControllerReferenceURL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithURL:url];
 	[self.player replaceCurrentItemWithPlayerItem:item];
 	
-	self.notificationToken = [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:item queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+	self.notificationToken = [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:item queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note)
+    {
 		// Simple item playback rewind.
 		[[self.player currentItem] seekToTime:kCMTimeZero];
 	}];
@@ -205,12 +160,36 @@
     [self.player play];
 }
 
-# pragma mark Popover Controller Delegate
+# pragma mark - Popover Presentation Controller Delegate
 
-- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-{
+- (void)popoverPresentationControllerDidDismissPopover:(UIPopoverPresentationController *)popoverPresentationController {
+    
+    // Called when a Popover is dismissed.
+    
     // Make sure playback is resumed from any interruption.
     [self.player play];
+}
+
+- (BOOL)popoverPresentationControllerShouldDismissPopover:(UIPopoverPresentationController *)popoverPresentationController {
+    // Return YES if the Popover should be dismissed.
+    // Return NO if the Popover should not be dismissed.
+    return YES;
+}
+
+- (void)popoverPresentationController:(UIPopoverPresentationController *)popoverPresentationController willRepositionPopoverToRect:(inout CGRect *)rect inView:(inout UIView *__autoreleasing  _Nonnull *)view
+{
+    // Called when the Popover changes positon.
+}
+
+# pragma mark - Adaptive Presentation Controller Delegate
+
+// Called for the iPhone only.
+- (UIModalPresentationStyle)adaptivePresentationStyleForPresentationController:(UIPresentationController *)controller
+{
+    return UIModalPresentationFullScreen;
+    
+    // Note: by returning this, you can force it to be a popover for iPhone!
+    // return UIModalPresentationNone;
 }
 
 @end
