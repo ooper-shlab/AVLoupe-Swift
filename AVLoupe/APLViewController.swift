@@ -119,12 +119,12 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
         videoPicker.modalPresentationStyle = .popover
         videoPicker.delegate = self
         // Initialize UIImagePickerController to select a movie from the camera roll.
-        videoPicker.sourceType = UIImagePickerControllerSourceType.savedPhotosAlbum
+        videoPicker.sourceType = .savedPhotosAlbum
         videoPicker.mediaTypes = [kUTTypeMovie as String]
         
         let popoverPresController = videoPicker.popoverPresentationController
         popoverPresController?.barButtonItem = sender
-        popoverPresController?.permittedArrowDirections = UIPopoverArrowDirection.any
+        popoverPresController?.permittedArrowDirections = .any
         popoverPresController?.delegate = self
         
         self.present(videoPicker, animated: true) {
@@ -182,10 +182,10 @@ class APLViewController: UIViewController, UIImagePickerControllerDelegate, UINa
     // Called for the iPhone only.
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle
     {
-        return UIModalPresentationStyle.fullScreen
+        return .fullScreen
     
         // Note: by returning this, you can force it to be a popover for iPhone!
-        // return UIModalPresentationNone;
+        // return .none
     }
     
 }
@@ -196,6 +196,12 @@ extension UIImagePickerController {
     
     override open var shouldAutorotate: Bool {
         return false
+    }
+    
+    //### Apple's doc says - The UIImagePickerController class supports portrait mode only.
+    // But we prefer Landscape only app use it in landscape mode, and this code actually works.
+    override open var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
     }
     
 }
